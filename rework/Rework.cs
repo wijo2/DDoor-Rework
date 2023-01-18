@@ -152,13 +152,13 @@ namespace rework
 
         //weapon mods
 
-        //new desctiptions
+        //new names and desctiptions in menu
         [HarmonyPatch(typeof(UICollectableCell), "updateText")]
         [HarmonyPrefix]
         public static bool updateText_pre(UICollectableCell __instance, InventoryItem ___itemData)
         {
-            if (!__instance.itemInfoTextArea || !UIMenuPauseController.instance.IsPaused() || !Resources.FindObjectsOfTypeAll<UIMenuWeapons>()[0].HasControl()) { return true; }
-            Log.LogWarning("item: " + ___itemData.GetItemName());
+            if (!__instance.itemInfoTextArea || !___itemData || !UIMenuPauseController.instance.IsPaused() || !Resources.FindObjectsOfTypeAll<UIMenuWeapons>()[0].HasControl()) { return true; }
+            //Log.LogWarning("item: " + ___itemData.GetItemName());
             switch (___itemData.GetItemName()){
                 case "sword_name":
                     __instance.itemNameTextArea.text = "The Non-Zoomynator";
@@ -170,7 +170,7 @@ namespace rework
                     break;
                 case "daggers_name":
                     __instance.itemNameTextArea.text = "The Ranged Scrub";
-                    __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nAttacks by throwing daggers. Upgrade dexterity to increase range.";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nAttacks by throwing daggers, upgrade dexterity to increase range.";
                     break;
                 case "hammer_name":
                     __instance.itemNameTextArea.text = "The Thought Clouder";
@@ -188,6 +188,29 @@ namespace rework
             return false;
         }
 
+        //Stats in menu
+        [HarmonyPatch(typeof(UIMenuWeapons), "SetWeaponStats")]
+        [HarmonyPrefix]
+        public static bool SetWeaponStats_pre(UIMenuWeapons __instance, InventoryItem item)
+        {
+            if (!UIMenuPauseController.instance.IsPaused() || !Resources.FindObjectsOfTypeAll<UIMenuWeapons>()[0].HasControl()) { return true; }
+
+            if (!item)
+            {
+                __instance.statWindow.SetActive(false);
+                return false;
+            }
+            __instance.statWindow.SetActive(true);
+            _Weapon component = item.prefab.GetComponent<_ChargeWeapon>();
+            if (component)
+            {
+                __instance.statDamage.text = (Mathf.Round(10 * component.baseDamage * 0.6f) / 10f).ToString();
+                __instance.statSwings.text = "It's a heavy wtf";
+                __instance.statSpeed.text = component.slashTime.ToString();
+                __instance.statRange.text = component.slashRadius.ToString();
+            } 
+            return false;
+        }
 
         //dealing damage changes
         [HarmonyPatch(typeof(_Weapon), "applyDamage", typeof(Damageable), typeof(Vector3))]
@@ -226,7 +249,7 @@ namespace rework
                         num = 0.6f;
                         break;
                     case _Weapon.WeaponType.Umbrella:
-                        num = 0;
+                        num = 0.1f;
                         break;
                 }
             }
@@ -463,8 +486,8 @@ namespace rework
                 var dir = __instance.gameObject.transform.forward;
                 dir.y = 0.3f;
                 GameObject bullet;
-                //var amount = UnityEngine.Random.Range(6, 12);
-                var amount = 12;
+                var amount = UnityEngine.Random.Range(10, 15);
+                //var amount = 12;
                 for (int a = 0; a <= 360; a += 360 / amount)
                 {
                     bullet = Instantiate(mageBulletPrefab, __instance.gameObject.transform.position + dir * 2, Quaternion.identity);
@@ -620,7 +643,7 @@ namespace rework
         //rocket list updating
         [HarmonyPatch(typeof(Redeemer), "Update")]
         [HarmonyPrefix]
-        public static bool Update_pre(Redeemer __instance, ref float ___rocketCountdown, ref bool ___shooting)
+        public static bool Update_pre(Redeemer __instance, ref float ___rocketCountdown)
         {
             var list = FindObjectOfType<RedeemerMissilePool>().GetComponentsInChildren<RedeemerMissile>(true);
             if (list.Length > 0 && list.Length < 50)
@@ -804,9 +827,9 @@ namespace rework
                 dir.Normalize();
                 var eul = Quaternion.LookRotation(new Vector3(dir.x, 0, dir.z)).eulerAngles.y;
                 GameObject bullet;
-                //var amount = UnityEngine.Random.Range(4, 6);
+                var amount = UnityEngine.Random.Range(3, 5);
                 var angle = 40;
-                var amount = 3; //4 but math
+                //var amount = 3; //4 but math
                 for (int a = angle / -2; a <= angle / 2; a += angle / amount)
                 {
                     bullet = Instantiate(arrowPrefab, __instance.gameObject.transform.position + dir / 2, Quaternion.identity);
