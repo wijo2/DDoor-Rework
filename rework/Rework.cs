@@ -152,6 +152,43 @@ namespace rework
 
         //weapon mods
 
+        //new desctiptions
+        [HarmonyPatch(typeof(UICollectableCell), "updateText")]
+        [HarmonyPrefix]
+        public static bool updateText_pre(UICollectableCell __instance, InventoryItem ___itemData)
+        {
+            if (!__instance.itemInfoTextArea || !UIMenuPauseController.instance.IsPaused() || !Resources.FindObjectsOfTypeAll<UIMenuWeapons>()[0].HasControl()) { return true; }
+            Log.LogWarning("item: " + ___itemData.GetItemName());
+            switch (___itemData.GetItemName()){
+                case "sword_name":
+                    __instance.itemNameTextArea.text = "The Non-Zoomynator";
+                    __instance.itemInfoTextArea.text = "The other traditional weapon of the crowkind, along with kitchenware.\nNormal attacks are somewhat weak, but backstabs do double damage.";
+                    break;
+                case "umbrella_name":
+                    __instance.itemNameTextArea.text = "The (Bullet) Rain Deflector";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the masochist kind.\nAttacks are extremely weak, but it shoots out a projectile that deflects bullets.";
+                    break;
+                case "daggers_name":
+                    __instance.itemNameTextArea.text = "The Ranged Scrub";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nAttacks by throwing daggers. Upgrade dexterity to increase range.";
+                    break;
+                case "hammer_name":
+                    __instance.itemNameTextArea.text = "The Thought Clouder";
+                    __instance.itemInfoTextArea.text = "The weapon only hit-and-run light heavy spam noobs used, well, not this time c:\nNobody knowssssss";
+                    break;
+                case "sword_heavy_name":
+                    __instance.itemNameTextArea.text = "The Slow Ass Repulsor";
+                    __instance.itemInfoTextArea.text = "The traditional Gray Crow murderer, well good luck with that this time.\nA very slow but powerful swing with knockback.";
+                    break;
+
+                default:
+                    __instance.itemInfoTextArea.text = "Sry m8, can't find the text, plz cry on dc so me is fix c:";
+                    break;
+            }
+            return false;
+        }
+
+
         //dealing damage changes
         [HarmonyPatch(typeof(_Weapon), "applyDamage", typeof(Damageable), typeof(Vector3))]
         [HarmonyPrefix]
