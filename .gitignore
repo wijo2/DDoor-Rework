@@ -5,7 +5,8 @@
 
 #
 Deps/
-DDoorDebug/Deps/
+obj/
+bin/
 
 # User-specific files
 *.rsuser
