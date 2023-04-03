@@ -1014,6 +1014,7 @@ namespace rework
                 return;
             }
             var projectileSlime = Instantiate(smallSlime, __instance.gameObject.transform.position + Vector3.up * 5, Quaternion.identity);
+            projectileSlime.transform.parent = __instance.gameObject.transform.parent;
             projectileSlime.GetComponent<Rigidbody>().velocity = Vector3.up * 30f;
             projectileSlime.SetActive(true);
             var dmg = projectileSlime.gameObject.GetComponent<DamageableCharacter>();
