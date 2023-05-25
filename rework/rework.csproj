@@ -67,6 +67,10 @@
       <HintPath>Deps\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>Deps\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>Deps\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
