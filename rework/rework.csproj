@@ -81,6 +81,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helper.cs" />
+    <Compile Include="GrandmaClone.cs" />
     <Compile Include="Rework.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

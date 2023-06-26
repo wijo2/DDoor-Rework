@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
@@ -25,6 +26,8 @@ namespace rework
         public static GameObject mediumSlime;
         public static GameObject smallSlime;
 
+        public static List<GameObject> grandmaClones = new List<GameObject>();
+
         public void Awake()
         {
             Log = base.Logger;
@@ -32,6 +35,8 @@ namespace rework
             Harmony harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(Rework));
         }
+
+        public static void L(string s) { Log.LogWarning(s); }
 
         //asset gather
         public static List<bool> LoadThings(params string[] things)
@@ -1136,5 +1141,116 @@ namespace rework
 
             return false;
         }
+
+
+        //Grandma
+
+        //create clone
+        public static GameObject CreateGranClone(float hp)
+        { 
+            var c = Instantiate(GrandmaBoss.instance.gameObject, GrandmaBoss.instance.gameObject.transform.parent);
+            grandmaClones.Add(c);
+            c.AddComponent<GrandmaClone>();
+            c.name = "gran clone";
+            var d = c.gameObject.GetComponent<DamageableBoss>();
+            d.maxHealth = hp;
+            d.HealToFull();
+            c.transform.position += new Vector3 (0, 10, 0);
+            return c;
+        }
+
+        //grandma is alive
+        [HarmonyPatch(typeof(GrandmaBoss), "Awake")]
+        [HarmonyPrefix]
+        public static bool Awake_pre(GrandmaBoss __instance)
+        {
+            if (__instance.gameObject.name == "grandma")
+            {
+                GrandmaBoss.instance = __instance;
+                var d = __instance.gameObject.GetComponent<DamageableBoss>();
+                d.maxHealth = 150;
+                d.HealToFull();
+                CreateGranClone(100);
+                CreateGranClone(50);
+            }
+            else
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        //pots thrown not quite at the player
+        [HarmonyPatch(typeof(HurlPot), "ThrowAt")]
+        [HarmonyPostfix]
+        public static void ThrowAt_post(Vector3 pos, HurlPot __instance, ref Vector3 ___endPos)
+        {
+            if (GrandmaBoss.instance)
+            {
+                ___endPos = pos + Vector3.up - (pos - __instance.transform.position).normalized * 3;
+            }
+        }
+
+        /*
+        unused code I used for cloning grandma's model when stupid happened, gonna keep it around if it's ever needed again, problem = animations
+        var gran = GrandmaBoss.instance;
+            if (gran == null) { return null; }
+
+            var c = new GameObject();
+            c.name = "gran clone";
+            c.transform.localPosition = gran.transform.localPosition;
+            c.transform.localRotation = gran.transform.localRotation;
+            c.transform.parent = gran.transform.parent;
+
+            var meshes = new List<SkinnedMeshRenderer>();
+            foreach (var kid in gran.GetComponentsInChildren<Transform>())
+            {
+                if (kid.transform.parent == gran.transform)
+                {
+                    meshes.Add(Instantiate(kid, c.transform).GetComponent<SkinnedMeshRenderer>());
+                }
+            }
+            c.AddComponent<GrandmaClone>();
+            grandmaClones.Add(c);
+
+            //  -- fix bones -- (fuck unity)
+
+            //find bones
+            var bones = new List<string>();
+            foreach(var entry in gran.GetComponentInChildren<SkinnedMeshRenderer>().bones)
+            {
+                bones.Add(entry.name);
+            }
+
+            //fill list
+            var newBones = new Transform[89];
+            Transform root = null;
+            foreach(var obj in c.GetComponentsInChildren<Transform>())
+            {
+                L("loop");
+                if (bones.Contains(obj.gameObject.name))
+                {
+                    L("bone check " + obj.gameObject.name);
+                    newBones[bones.IndexOf(obj.gameObject.name)] = obj;
+                    if (obj.gameObject.name == "_Root")
+                    {
+                        root = obj.transform;
+                    }
+                }
+            }
+
+            //fix them
+            foreach (var mesh in meshes)
+            {
+                if (mesh != null)
+                {
+                    mesh.bones = newBones;
+                    //root bone
+                    mesh.rootBone = root;
+                }
+            }
+
+            return c;*/
     }
 }
