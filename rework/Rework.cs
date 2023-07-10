@@ -8,6 +8,7 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace rework
 {
@@ -27,6 +28,9 @@ namespace rework
         public static GameObject smallSlime;
 
         public static List<GameObject> grandmaClones = new List<GameObject>();
+        public static bool needGranClone; //if grandma can't be cloned currently it will do it in a bit
+        public static float granSavedHp;
+        public static float granSavedMaxHp;
 
         public void Awake()
         {
@@ -34,6 +38,23 @@ namespace rework
 
             Harmony harmony = new Harmony(pluginGuid);
             harmony.PatchAll(typeof(Rework));
+        }
+
+        public void OnEnable()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            grandmaClones.Clear();
+            needGranClone = false;
+            GrandmaClone.Reset();
+        }
+
+        public void FixedUpdate()
+        {
+            if (needGranClone) { CreateGranClone(0, 0); } //dark gran fix maybe plz just stop
         }
 
         public static void L(string s) { Log.LogWarning(s); }
@@ -1146,16 +1167,38 @@ namespace rework
         //Grandma
 
         //create clone
-        public static GameObject CreateGranClone(float hp)
-        { 
+        public static GameObject CreateGranClone(float hp, float maxHp)
+        {
+            //don't clone unless correct form
+            L("create clone " + hp.ToString() + " " + maxHp.ToString());
+            if (needGranClone)
+            {
+                L("needgranclone");
+                hp = granSavedHp;
+                maxHp = granSavedMaxHp;
+                L("hps " + hp.ToString() + " " + maxHp.ToString());
+                needGranClone = false;
+            }
+            var s = GrandmaBoss.instance.GetState(); 
+            if (s != AI_Brain.AIState.Patrol && s != AI_Brain.AIState.Shoot) 
+            {
+                L("can't clone");
+                needGranClone = true;
+                granSavedHp = hp;
+                granSavedMaxHp = maxHp;
+                return null; 
+            }
+
+            L("instantiating");
             var c = Instantiate(GrandmaBoss.instance.gameObject, GrandmaBoss.instance.gameObject.transform.parent);
             grandmaClones.Add(c);
             c.AddComponent<GrandmaClone>();
             c.name = "gran clone";
             var d = c.gameObject.GetComponent<DamageableBoss>();
-            d.maxHealth = hp;
-            d.HealToFull();
+            d.maxHealth = maxHp;
+            d.ForceHealth(hp);
             c.transform.position += new Vector3 (0, 10, 0);
+            c.SetActive(false);
             return c;
         }
 
@@ -1170,8 +1213,6 @@ namespace rework
                 var d = __instance.gameObject.GetComponent<DamageableBoss>();
                 d.maxHealth = 150;
                 d.HealToFull();
-                CreateGranClone(100);
-                CreateGranClone(50);
             }
             else
             {
@@ -1192,33 +1233,64 @@ namespace rework
             }
         }
 
-        /*
-        unused code I used for cloning grandma's model when stupid happened, gonna keep it around if it's ever needed again, problem = animations
-        var gran = GrandmaBoss.instance;
-            if (gran == null) { return null; }
+        //on grandma death rage increases for other grandmas
+        [HarmonyPatch(typeof(DamageableBoss), "Die")]
+        [HarmonyPrefix]
+        public static bool Die_pre(DamageableBoss __instance)
+        {
+            if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone")
+            {
+                GrandmaClone.rage++;
+                return false;
+            }
+            return true;
+        }
 
-            var c = new GameObject();
-            c.name = "gran clone";
-            c.transform.localPosition = gran.transform.localPosition;
-            c.transform.localRotation = gran.transform.localRotation;
-            c.transform.parent = gran.transform.parent;
+        //spawn garndma clones when needed
+        [HarmonyPatch(typeof(DamageableBoss), "ReceiveDamage")]
+        [HarmonyPostfix]
+        public static void recieveDamage_post(DamageableBoss __instance)
+        {
+            GrandmaClone.calcHpAndSpawn();
+        }
+
+        //make gran clones visible when appropriate
+        [HarmonyPatch(typeof(GrandmaBoss), "SetState")]
+        [HarmonyPrefix]
+        public static void SetState_pre(GrandmaBoss __instance, AI_Brain.AIState newState)
+        {
+            if (__instance == GrandmaBoss.instance && newState == AI_Brain.AIState.TeleportIn)
+            {
+                foreach (var gran in grandmaClones)
+                {
+                    if (gran.active == false) { gran.SetActive(true); }
+                    var b = gran.GetComponent<GrandmaBoss>();
+                    //if (b.GetState() != AI_Brain.AIState.TeleportIn) { b.SetState(AI_Brain.AIState.TeleportIn); }
+                }
+            }
+        }
+
+        /* unused code
+        public static void CloneGranVisuals(GameObject clone)
+        {
+            //I shouldn't have to do this tho :c
+            var gran = GrandmaBoss.instance;
+            if (gran == null) { return; }
 
             var meshes = new List<SkinnedMeshRenderer>();
             foreach (var kid in gran.GetComponentsInChildren<Transform>())
             {
                 if (kid.transform.parent == gran.transform)
                 {
-                    meshes.Add(Instantiate(kid, c.transform).GetComponent<SkinnedMeshRenderer>());
+                    meshes.Add(Instantiate(kid, clone.transform).GetComponent<SkinnedMeshRenderer>());
                 }
             }
-            c.AddComponent<GrandmaClone>();
-            grandmaClones.Add(c);
 
             //  -- fix bones -- (fuck unity)
 
             //find bones
             var bones = new List<string>();
-            foreach(var entry in gran.GetComponentInChildren<SkinnedMeshRenderer>().bones)
+            foreach (var entry in gran.GetComponentInChildren<SkinnedMeshRenderer>().bones)
             {
                 bones.Add(entry.name);
             }
@@ -1226,7 +1298,7 @@ namespace rework
             //fill list
             var newBones = new Transform[89];
             Transform root = null;
-            foreach(var obj in c.GetComponentsInChildren<Transform>())
+            foreach (var obj in clone.GetComponentsInChildren<Transform>())
             {
                 L("loop");
                 if (bones.Contains(obj.gameObject.name))
@@ -1250,7 +1322,6 @@ namespace rework
                     mesh.rootBone = root;
                 }
             }
-
-            return c;*/
+        }*/
     }
 }
