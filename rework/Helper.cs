@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using UnityEngine;
+using HarmonyLib;
 
 namespace rework
 {
@@ -34,6 +35,11 @@ namespace rework
                 finfo.SetValue(comp, finfo.GetValue(other));
             }
             return comp as T;
+        }
+
+        public static void CopyPrivateValue<T>(T copyInstance, T pasteInstance, string name)
+        {
+            AccessTools.Field(typeof(T), name).SetValue(pasteInstance, AccessTools.Field(typeof(GrandmaBoss), name).GetValue(copyInstance));
         }
     }
 }

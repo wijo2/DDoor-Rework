@@ -28,9 +28,9 @@ namespace rework
         public static GameObject smallSlime;
 
         public static List<GameObject> grandmaClones = new List<GameObject>();
-        public static bool needGranClone; //if grandma can't be cloned currently it will do it in a bit
+        /*public static bool needGranClone; //if grandma can't be cloned currently it will do it in a bit
         public static float granSavedHp;
-        public static float granSavedMaxHp;
+        public static float granSavedMaxHp;*/
 
         public void Awake()
         {
@@ -48,14 +48,14 @@ namespace rework
         public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             grandmaClones.Clear();
-            needGranClone = false;
+            //needGranClone = false;
             GrandmaClone.Reset();
         }
 
-        public void FixedUpdate()
+        /*public void FixedUpdate()
         {
             if (needGranClone) { CreateGranClone(0, 0); } //dark gran fix maybe plz just stop
-        }
+        }*/
 
         public static void L(string s) { Log.LogWarning(s); }
 
@@ -896,9 +896,12 @@ namespace rework
         [HarmonyPostfix]
         public static void Start_post(ChaserBullet __instance)
         {
-            __instance.airTracking = 0.5f;
-            __instance.trackingAccel = 2;
-            __instance.shootSpeed = 16;
+            if (SceneManager.GetActiveScene().name != "boss_Grandma")
+            {
+                __instance.airTracking = 0.5f;
+                __instance.trackingAccel = 2;
+                __instance.shootSpeed = 16;
+            }
         }
 
         //smough
@@ -1164,41 +1167,22 @@ namespace rework
         }
 
 
-        //Grandma
+        //Grandma (bane of my existence)
 
         //create clone
         public static GameObject CreateGranClone(float hp, float maxHp)
         {
-            //don't clone unless correct form
             L("create clone " + hp.ToString() + " " + maxHp.ToString());
-            if (needGranClone)
-            {
-                L("needgranclone");
-                hp = granSavedHp;
-                maxHp = granSavedMaxHp;
-                L("hps " + hp.ToString() + " " + maxHp.ToString());
-                needGranClone = false;
-            }
-            var s = GrandmaBoss.instance.GetState(); 
-            if (s != AI_Brain.AIState.Patrol && s != AI_Brain.AIState.Shoot) 
-            {
-                L("can't clone");
-                needGranClone = true;
-                granSavedHp = hp;
-                granSavedMaxHp = maxHp;
-                return null; 
-            }
 
-            L("instantiating");
+            L("instantiating");        
             var c = Instantiate(GrandmaBoss.instance.gameObject, GrandmaBoss.instance.gameObject.transform.parent);
             grandmaClones.Add(c);
-            c.AddComponent<GrandmaClone>();
+            var cloneScript = c.AddComponent<GrandmaClone>();
             c.name = "gran clone";
             var d = c.gameObject.GetComponent<DamageableBoss>();
             d.maxHealth = maxHp;
-            d.ForceHealth(hp);
+            cloneScript.hp = hp;
             c.transform.position += new Vector3 (0, 10, 0);
-            c.SetActive(false);
             return c;
         }
 
@@ -1211,7 +1195,7 @@ namespace rework
             {
                 GrandmaBoss.instance = __instance;
                 var d = __instance.gameObject.GetComponent<DamageableBoss>();
-                d.maxHealth = 150;
+                d.maxHealth = 125;
                 d.HealToFull();
             }
             else
@@ -1229,7 +1213,7 @@ namespace rework
         {
             if (GrandmaBoss.instance)
             {
-                ___endPos = pos + Vector3.up - (pos - __instance.transform.position).normalized * 3;
+                ___endPos = pos + Vector3.up - (pos - __instance.transform.position).normalized * 4;
             }
         }
 
@@ -1241,6 +1225,7 @@ namespace rework
             if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone")
             {
                 GrandmaClone.rage++;
+                UnityEngine.Object.Destroy(__instance);
                 return false;
             }
             return true;
@@ -1251,23 +1236,84 @@ namespace rework
         [HarmonyPostfix]
         public static void recieveDamage_post(DamageableBoss __instance)
         {
-            GrandmaClone.calcHpAndSpawn();
+            GrandmaClone.CalcHpAndEnable();
         }
 
         //make gran clones visible when appropriate
         [HarmonyPatch(typeof(GrandmaBoss), "SetState")]
-        [HarmonyPrefix]
-        public static void SetState_pre(GrandmaBoss __instance, AI_Brain.AIState newState)
+        [HarmonyPostfix]
+        public static void SetState_post(GrandmaBoss __instance, AI_Brain.AIState newState)
         {
-            if (__instance == GrandmaBoss.instance && newState == AI_Brain.AIState.TeleportIn)
+            if (__instance == GrandmaBoss.instance && newState == AI_Brain.AIState.PrepTeleport)
             {
                 foreach (var gran in grandmaClones)
                 {
-                    if (gran.active == false) { gran.SetActive(true); }
                     var b = gran.GetComponent<GrandmaBoss>();
-                    //if (b.GetState() != AI_Brain.AIState.TeleportIn) { b.SetState(AI_Brain.AIState.TeleportIn); }
+
+                    if (!gran.active && gran.GetComponent<GrandmaClone>().shouldBeActive)
+                    {
+                        gran.SetActive(true);
+                        if (b.GetState() != AI_Brain.AIState.PrepTeleport) { b.SetState(AI_Brain.AIState.PrepTeleport); }
+                    }
+                    
+                    //AccessTools.Field(typeof(GrandmaBoss), "timer").SetValue(b, 0.01f);
+                    Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, b, "throwCounter");
+                    
                 }
             }
+
+            if (__instance == GrandmaBoss.instance && newState == AI_Brain.AIState.TeleportIn && grandmaClones.Count() == 0)
+            {
+                CreateGranClone(90, 150);
+                CreateGranClone(50, 150);
+            }
+        }
+
+        //sync grandmas after spin
+        [HarmonyPatch(typeof(GrandmaBoss), "Anim_CannonMode")]
+        [HarmonyPostfix]
+        public static void SyncOldPerson(GrandmaBoss __instance)
+        {
+            if (__instance != GrandmaBoss.instance && GrandmaBoss.instance.GetState() == AI_Brain.AIState.Laser) //if a clone is late it's sped up
+            {
+                L("clone spin");
+                foreach (var gran in grandmaClones)
+                {
+                    if (gran.GetComponent<GrandmaClone>().shouldBeActive)
+                    {
+                        L("copy attempt on clone spin");
+                        Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, gran.GetComponent<GrandmaBoss>(), "timer");
+                    }
+                }
+            }
+            if (__instance == GrandmaBoss.instance) //if og is late everyone else is slowed down
+            {
+                L("og spin");
+                foreach (var gran in grandmaClones)
+                {
+                    if (gran.GetComponent<GrandmaClone>().shouldBeActive && gran.GetComponent<GrandmaBoss>().GetState() == AI_Brain.AIState.Laser)
+                    {
+                        L("copy attempt on og spin");
+                        Helper.CopyPrivateValue<AI_Brain>(GrandmaBoss.instance.GetComponent<AI_Brain>(), gran.GetComponent<AI_Brain>(), "timer");
+                    }
+                }
+            }
+        }
+
+        //always phase 3
+        [HarmonyPatch(typeof(GrandmaBoss), "getPhase")]
+        [HarmonyPostfix]
+        public static void getPhase_post(GrandmaBoss __instance, ref AI_Brain.Phase __result)
+        {
+            __result = AI_Brain.Phase.Three;
+        }
+
+        //disable hotpot (sry :/)
+        [HarmonyPatch(typeof(GrandmaFireDetector), "FireInTheHole")]
+        [HarmonyPrefix]
+        public static bool StopArson()
+        {
+            return false;
         }
 
         /* unused code

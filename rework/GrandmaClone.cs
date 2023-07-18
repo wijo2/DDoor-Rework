@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using HarmonyLib;
 
 namespace rework
 {
@@ -15,29 +16,45 @@ namespace rework
 
         public int howManyeth;
         public GrandmaBoss ai;
+        public float hp; //needed because something resets to max hp
+        public bool sethp = false;
+        public bool shouldBeActive = false;
         
+
+        public void OnEnable()
+        {
+            howManyCurrently++;
+        }
+
+        public void OnDisable()
+        {
+            howManyCurrently--;
+        }
+
 
         public void Start()
         {
-            grandmasTotal++;
-            howManyCurrently++;
             howManyeth = howManyCurrently;
             ai = GetComponent<GrandmaBoss>();
+            Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, ai, "throwCounter");
+            gameObject.SetActive(false);
+            //AccessTools.Field(typeof(GrandmaBoss), "throwCounter").SetValue(ai, AccessTools.Field(typeof(GrandmaBoss), "throwCounter").GetValue(GrandmaBoss.instance));
         }
 
         public void Update()
         {
+            if (!sethp) { GetComponent<DamageableBoss>().ForceHealth(hp); sethp = true; }
+
             var state = ai.GetState();
             //if (gameObject.active == false && GrandmaBoss.instance.GetState() == AI_Brain.AIState.TeleportIn) { gameObject.SetActive(true); ai.SetState(AI_Brain.AIState.TeleportIn); }
 
-            if (/*state != AI_Brain.AIState.Laser && */state != AI_Brain.AIState.PrepShoot)
+            if (/*state != AI_Brain.AIState.Laser && */state != AI_Brain.AIState.PrepShoot && state != AI_Brain.AIState.Dash && state != AI_Brain.AIState.Transform && state != AI_Brain.AIState.PrepTransform)
             {
-                var c = Rework.grandmaClones.Count();
-                if (c == 1)
+                if (howManyCurrently == 1)
                 {
                     transform.localPosition = new Vector3(-1 * GrandmaBoss.instance.transform.localPosition.x, GrandmaBoss.instance.transform.localPosition.y, -1 * GrandmaBoss.instance.transform.localPosition.z);
                 }
-                if (c == 2)
+                if (howManyCurrently == 2)
                 {
                     var s = Mathf.Sqrt(3) / 2;
                     if (howManyeth == 2)
@@ -51,23 +68,27 @@ namespace rework
             }
         }
 
-        public static void calcHpAndSpawn()
+        public static void CalcHpAndEnable()
         {
             Rework.L("hp check");
             var hp = GrandmaBoss.instance.GetComponent<DamageableBoss>().GetCurrentHealth();
             foreach (var gran in Rework.grandmaClones)
             {
-                hp += gran.GetComponent<DamageableBoss>().GetCurrentHealth();
+                if (gran.GetComponent<GrandmaClone>().shouldBeActive)
+                {
+                    hp += gran.GetComponent<DamageableBoss>().GetCurrentHealth();
+                }
             }
-            if (grandmasTotal == 1 && hp < 100) { Rework.CreateGranClone(100, 150); }
-            else if (grandmasTotal == 2 && hp < 100) { Rework.CreateGranClone(50, 150); }
+            if (grandmasTotal == 1 && hp < 90) { Rework.grandmaClones[0].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
+            else if (grandmasTotal == 2 && hp < 100) { Rework.grandmaClones[1].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
         }
 
         public static void Reset()
         {
+            grandmasTotal = 1;
             howManyCurrently = 0;
             rage = 0;
-            grandmasTotal = 1;
+            Rework.grandmaClones.Clear();
         }
     }
 }
