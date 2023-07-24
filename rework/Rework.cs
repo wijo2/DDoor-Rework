@@ -24,6 +24,7 @@ namespace rework
         public static GameObject mageBulletPrefab;
         public static GameObject arrowPrefab;
         public static GameObject daggerModel;
+        public static GameObject umbrellaModel;
         public static GameObject mediumSlime;
         public static GameObject smallSlime;
 
@@ -118,6 +119,20 @@ namespace rework
                         returns.Add(daggerModel != null);
                         break;
 
+                    case "um":
+                        if (umbrellaModel == null)
+                        {
+                            foreach(var obj in FindObjectsOfType<Copy2DPos>())
+                            {
+                                if (obj.name == "Weapon_Umbrella")
+                                {
+                                    umbrellaModel = Instantiate(obj.GetComponentInChildren<Animator>().gameObject, null);
+                                }
+                            }
+                        }
+                        returns.Add(daggerModel != null);
+                        break;
+
                     case "mediumSlime":
                         if (mediumSlime == null)
                         {
@@ -196,7 +211,7 @@ namespace rework
                     break;
                 case "daggers_name":
                     __instance.itemNameTextArea.text = "The Ranged Scrub";
-                    __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nAttacks by throwing daggers, upgrade dexterity to increase range.";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nLight attack throws daggers with 0.5 base dmg (about half of uc heavy), upgrade dexterity to increase range.";
                     break;
                 case "hammer_name":
                     __instance.itemNameTextArea.text = "The Thought Clouder";
