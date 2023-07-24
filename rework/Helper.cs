@@ -11,7 +11,7 @@ namespace rework
 {
     public static class Helper
     {
-        //internet magic
+        //internet magic (that didn't even work fuck interner magic)
         public static T GetCopyOf<T>(this Component comp, T other) where T : Component
         {
             Type type = comp.GetType();
@@ -37,6 +37,7 @@ namespace rework
             return comp as T;
         }
 
+        //my magic (that works, take that internet magic)
         public static void CopyPrivateValue<T>(T copyInstance, T pasteInstance, string name)
         {
             AccessTools.Field(typeof(T), name).SetValue(pasteInstance, AccessTools.Field(typeof(GrandmaBoss), name).GetValue(copyInstance));

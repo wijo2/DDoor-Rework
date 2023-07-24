@@ -13,6 +13,13 @@ namespace rework
         public static int howManyCurrently = 0;
         public static int rage = 0;
         public static int grandmasTotal = 1; //how many have existed, so basically spawning phase
+        public static AI_Brain.AIState[] noMoveStates = new AI_Brain.AIState[] { 
+            AI_Brain.AIState.PrepShoot,
+            AI_Brain.AIState.Dash, 
+            AI_Brain.AIState.Transform, 
+            AI_Brain.AIState.PrepTransform, 
+            AI_Brain.AIState.Throw
+        };
 
         public int howManyeth;
         public GrandmaBoss ai;
@@ -38,7 +45,6 @@ namespace rework
             ai = GetComponent<GrandmaBoss>();
             Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, ai, "throwCounter");
             gameObject.SetActive(false);
-            //AccessTools.Field(typeof(GrandmaBoss), "throwCounter").SetValue(ai, AccessTools.Field(typeof(GrandmaBoss), "throwCounter").GetValue(GrandmaBoss.instance));
         }
 
         public void Update()
@@ -46,9 +52,7 @@ namespace rework
             if (!sethp) { GetComponent<DamageableBoss>().ForceHealth(hp); sethp = true; }
 
             var state = ai.GetState();
-            //if (gameObject.active == false && GrandmaBoss.instance.GetState() == AI_Brain.AIState.TeleportIn) { gameObject.SetActive(true); ai.SetState(AI_Brain.AIState.TeleportIn); }
-
-            if (/*state != AI_Brain.AIState.Laser && */state != AI_Brain.AIState.PrepShoot && state != AI_Brain.AIState.Dash && state != AI_Brain.AIState.Transform && state != AI_Brain.AIState.PrepTransform)
+            if (!noMoveStates.Contains(state))
             {
                 if (howManyCurrently == 1)
                 {
@@ -70,7 +74,7 @@ namespace rework
 
         public static void CalcHpAndEnable()
         {
-            Rework.L("hp check");
+            //Rework.L("hp check");
             var hp = GrandmaBoss.instance.GetComponent<DamageableBoss>().GetCurrentHealth();
             foreach (var gran in Rework.grandmaClones)
             {
@@ -80,7 +84,7 @@ namespace rework
                 }
             }
             if (grandmasTotal == 1 && hp < 90) { Rework.grandmaClones[0].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
-            else if (grandmasTotal == 2 && hp < 100) { Rework.grandmaClones[1].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
+            else if (grandmasTotal == 2 && hp < 100) { Rework.grandmaClones.Last().GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
         }
 
         public static void Reset()

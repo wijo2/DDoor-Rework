@@ -188,7 +188,7 @@ namespace rework
             switch (___itemData.GetItemName()){
                 case "sword_name":
                     __instance.itemNameTextArea.text = "The Non-Zoomynator";
-                    __instance.itemInfoTextArea.text = "The other traditional weapon of the crowkind, along with kitchenware.\nNormal attacks are somewhat weak, but backstabs do double damage.";
+                    __instance.itemInfoTextArea.text = "The other traditional weapon of the crowkind, along with kitchenware.\nLight attacks only deal quarter of uncharged heavy dmg, but backstabs deal uncharged heavy dmg.";
                     break;
                 case "umbrella_name":
                     __instance.itemNameTextArea.text = "The (Bullet) Rain Deflector";
@@ -254,7 +254,7 @@ namespace rework
                 switch (__instance.type)
                 {
                     case _Weapon.WeaponType.Sword:
-                        num = __instance.baseDamage / 3;
+                        num /= 2; // = 1/4 of uc heavy
                         var pp = new Vector2(__instance.gameObject.transform.position.x, __instance.gameObject.transform.position.z);
                         var ep = new Vector2(dmg.gameObject.transform.position.x, dmg.gameObject.transform.position.z);
                         var ea = new Vector2(dmg.gameObject.transform.forward.x, dmg.gameObject.transform.forward.z);
@@ -262,7 +262,8 @@ namespace rework
                         //Log.LogWarning(Vector2.Angle(ea, diff));
                         if (Vector2.Angle(ea, diff) < 60)
                         {
-                            num = __instance.baseDamage * 2;
+                            num *= 4; // = uc heavy
+                            SoundEngine.Event("HeavyAttackFullyCharged", __instance.gameObject);
                         }
                         break;
                     case _Weapon.WeaponType.Dagger:
@@ -275,7 +276,7 @@ namespace rework
                         num = 0.6f;
                         break;
                     case _Weapon.WeaponType.Umbrella:
-                        num = 0.1f;
+                        num = 0;
                         break;
                 }
             }
@@ -1217,18 +1218,32 @@ namespace rework
             }
         }
 
-        //on grandma death rage increases for other grandmas
+        //on grandma death rage increases for other grandmas and move instance to another if necessary
         [HarmonyPatch(typeof(DamageableBoss), "Die")]
         [HarmonyPrefix]
         public static bool Die_pre(DamageableBoss __instance)
         {
-            if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone")
+            if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone" && GrandmaClone.rage < 2)
             {
                 GrandmaClone.rage++;
-                UnityEngine.Object.Destroy(__instance);
+                if (__instance.GetComponent<GrandmaBoss>() == GrandmaBoss.instance || GrandmaBoss.instance == null)
+                {
+                    GrandmaBoss.instance = grandmaClones[0].GetComponent<GrandmaBoss>();
+                    UnityEngine.Object.Destroy(grandmaClones[0].GetComponent<GrandmaClone>());
+                    grandmaClones.RemoveAt(0);
+                }
+                UnityEngine.Object.Destroy(__instance.gameObject);
                 return false;
             }
             return true;
+        }
+
+        //stop gran fucking up my precious instance
+        [HarmonyPatch(typeof(GrandmaBoss), "OnDestroy")]
+        [HarmonyPrefix]
+        public static bool OnDestroy_pre()
+        {
+            return GrandmaClone.rage > 2;
         }
 
         //spawn garndma clones when needed
@@ -1315,8 +1330,10 @@ namespace rework
         {
             return false;
         }
+    }
+}
 
-        /* unused code
+/* unused code
         public static void CloneGranVisuals(GameObject clone)
         {
             //I shouldn't have to do this tho :c
@@ -1369,5 +1386,3 @@ namespace rework
                 }
             }
         }*/
-    }
-}
