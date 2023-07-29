@@ -29,9 +29,6 @@ namespace rework
         public static GameObject smallSlime;
 
         public static List<GameObject> grandmaClones = new List<GameObject>();
-        /*public static bool needGranClone; //if grandma can't be cloned currently it will do it in a bit
-        public static float granSavedHp;
-        public static float granSavedMaxHp;*/
 
         public void Awake()
         {
@@ -49,14 +46,9 @@ namespace rework
         public void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             grandmaClones.Clear();
-            //needGranClone = false;
             GrandmaClone.Reset();
+            LoadThings("all");
         }
-
-        /*public void FixedUpdate()
-        {
-            if (needGranClone) { CreateGranClone(0, 0); } //dark gran fix maybe plz just stop
-        }*/
 
         public static void L(string s) { Log.LogWarning(s); }
 
@@ -65,7 +57,7 @@ namespace rework
         {
             if (things == new string[] { "all" })
             {
-                things = new string[] { "mb", "ga", "dm", "mediumSlime" };
+                things = new string[] { "mb", "ga", "dm", "um", "mediumSlime", "smallSlime" };
             }
             List<bool> returns = new List<bool>();
             List<bool> f = new List<bool>() { false };
@@ -122,15 +114,16 @@ namespace rework
                     case "um":
                         if (umbrellaModel == null)
                         {
-                            foreach(var obj in FindObjectsOfType<Copy2DPos>())
+                            foreach(var obj in Resources.FindObjectsOfTypeAll<Copy2DPos>())
                             {
                                 if (obj.name == "Weapon_Umbrella")
                                 {
                                     umbrellaModel = Instantiate(obj.GetComponentInChildren<Animator>().gameObject, null);
+                                    break;
                                 }
                             }
                         }
-                        returns.Add(daggerModel != null);
+                        returns.Add(umbrellaModel != null);
                         break;
 
                     case "mediumSlime":
@@ -176,19 +169,11 @@ namespace rework
                         break;
 
                     default:
-                        Log.LogWarning("LoadThings string doesn't exist");
+                        Log.LogWarning("LoadThings string \"" + thing + "\" doesn't exist");
                         break;
                 }
             }
             return returns;
-        }
-
-        //load things on map load
-        [HarmonyPatch(typeof(GameSceneManager), "LoadScene")]
-        [HarmonyPostfix]
-        public static void LoadScene_post()
-        {
-            LoadThings("all");
         }
 
         //weapon mods
@@ -331,13 +316,16 @@ namespace rework
         public static bool Attack_post(bool __result, bool bypassInputLock, _Weapon __instance, WeaponAttackReferences ___attackReference, InputLock ___inputLock, WeaponControl ___control)
         {
             if (!ReferenceEquals(__instance, ___attackReference.lightAttack) || !__result) { return __result; }
-            switch (__instance.type)
+            var type = __instance.type;
+            if (type == _Weapon.WeaponType.Sword && __instance.gameObject.name == "WEAPON_Umbrella(Clone)") { type = _Weapon.WeaponType.Umbrella; }
+
+            switch (type)
             {
                 case _Weapon.WeaponType.Dagger:
                     if (!LoadThings("dm")[0]) { return __result; }
+                    if (!LoadThings("mb")[0]) { return __result; }
                     var model = Instantiate(daggerModel);
                     model.GetComponentInChildren<Renderer>().enabled = true;
-                    if (!LoadThings("mb")[0]) { return __result; }
 
                     var newPrefab = Instantiate(mageBulletPrefab);
                     var particles = newPrefab.transform.Find("Particle System").gameObject;
@@ -366,6 +354,7 @@ namespace rework
                     model.transform.localPosition = Vector3.zero;
                     model.transform.localScale = Vector3.one * 1.5f * Mathf.Pow(Inventory.GetMeleeDamageModifier(), 0.5f);
                     model.transform.localEulerAngles = new Vector3(90, Mathf.Rad2Deg * Mathf.Atan2(dir.x, dir.z), 0);
+
                     //fix the collider
                     Destroy(newPrefab.GetComponent<SphereCollider>());
                     CapsuleCollider cc;
@@ -384,6 +373,16 @@ namespace rework
                     bulletComponent.Shoot(dir, 3.5f / Mathf.Pow(Inventory.GetDexterityModifier(), 0.5f));
                     newPrefab.GetComponent<TimedDelete>().timer = 0.2f / Mathf.Pow(Inventory.GetDexterityModifier(), 1.5f);
                     return __result;
+
+                case _Weapon.WeaponType.Umbrella:
+                    if (!LoadThings("um")[0]) { L("couldn't find umbrella model"); return __result; }
+                    var projectile = Instantiate(umbrellaModel);
+                    projectile.SetActive(true);
+                    projectile.transform.localPosition = PlayerGlobal.instance.transform.position;
+                    projectile.transform.rotation = Quaternion.identity;
+                    var bulletComp = projectile.AddComponent<UmbrellaBullet>();
+                    bulletComp.Shoot(PlayerGlobal.instance.transform.forward, 5);
+                    return __result;
             }
             return __result;
         }
@@ -400,7 +399,7 @@ namespace rework
             }
         }
 
-        //bullets don't double
+        //bullets don't double dmg
         [HarmonyPatch(typeof(HitBackProjectile), nameof(HitBackProjectile.ReceiveDamage), typeof(float), typeof(float), typeof(Vector3), typeof(Vector3), typeof(Damageable.DamageType), typeof(float))]
         [HarmonyPostfix]
         public static void ReceiveDamage_post(HitBackProjectile __instance, float dmg)
@@ -431,7 +430,7 @@ namespace rework
             return true;
         }
 
-        //slash visuals shrunken
+        //slash visuals shrunken (mostly copy paste code)
         [HarmonyPatch(typeof(_Weapon), nameof(_Weapon.VisualSlash), typeof(bool))]
         [HarmonyPrefix]
         public static bool VisualSlash_pre(_Weapon __instance, WeaponAttackReferences ___attackReference, ref bool ___attacking, Light[] ___lightSource, ref Vector3 ___slashRingLocalPos, WeaponControl ___control, float ___timeModifier, string ___attackName, bool playSound = true)
