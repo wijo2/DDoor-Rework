@@ -26,4 +26,4 @@ step 1: make sure you have the debug mod installed (you can get it from here: ht
 
 step 2: go to https://github.com/wijo2/DDoor-Rework/releases and download the .net v.4.5.2 file, and drag it into the aftermentioned plugins folder.
 
-step 3: boot up the game, if you see the bind gui for weapon switch at the top left of the title screen that means it has been successfully installed. If not however, try the other file on the releases page, the first suggested version doesn't work for everyone.
+step 3: boot up the game, if you see the bind gui for weapon switch at the top left of the title screen that means it has been successfully installed. If not however, try the other file on the releases page, the above suggested version doesn't work for everyone.
