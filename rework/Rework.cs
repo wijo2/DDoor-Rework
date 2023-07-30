@@ -30,6 +30,8 @@ namespace rework
 
         public static List<GameObject> grandmaClones = new List<GameObject>();
 
+        public static InventoryItem lastWeapon;
+
         public void Awake()
         {
             Log = base.Logger;
@@ -47,7 +49,7 @@ namespace rework
         {
             grandmaClones.Clear();
             GrandmaClone.Reset();
-            LoadThings("all");
+            LoadThings(new string[] { "all" });
         }
 
         public static void L(string s) { Log.LogWarning(s); }
@@ -185,7 +187,7 @@ namespace rework
         [HarmonyPrefix]
         public static void SetWeapon_pre(WeaponControl __instance)
         {
-            GUI.MainMenuGUI.lastWeapon = __instance.weaponRight;
+            lastWeapon = __instance.weaponRight;
         }
 
         //weapon mods
@@ -204,7 +206,7 @@ namespace rework
                     break;
                 case "umbrella_name":
                     __instance.itemNameTextArea.text = "The (Bullet) Rain Deflector";
-                    __instance.itemInfoTextArea.text = "The traditional weapon of the masochist kind.\nAttacks are extremely weak, but it shoots out a projectile that deflects bullets.";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the masochist kind.\nAttacks are extremely weak, but light attack shoots out a projectile that, wile doesn't deal any damage, deflects bullets for 0.5 dmg each.";
                     break;
                 case "daggers_name":
                     __instance.itemNameTextArea.text = "The Ranged Scrub";
@@ -260,10 +262,13 @@ namespace rework
                 return false;
             }
 
+            var type = __instance.type;
+            if (type == _Weapon.WeaponType.Sword && __instance.gameObject.name == "WEAPON_Umbrella(Clone)") { type = _Weapon.WeaponType.Umbrella; }
+
             float num = 0.6f * __instance.baseDamage;
             if (ReferenceEquals(__instance, ___attackReference.lightAttack))
             {
-                switch (__instance.type)
+                switch (type)
                 {
                     case _Weapon.WeaponType.Sword:
                         num /= 2; // = 1/4 of uc heavy
@@ -447,6 +452,9 @@ namespace rework
                     case _Weapon.WeaponType.Sword:
                         __instance.slashRadius = 1;
                         break;
+                    case _Weapon.WeaponType.Umbrella:
+                        __instance.slashRadius = 0;
+                        break;
                     case _Weapon.WeaponType.Dagger:
                         __instance.slashRadius = 0;
                         break;
@@ -476,7 +484,7 @@ namespace rework
                         }
                     }
                 }
-                if (__instance.slashPrefab && !(ReferenceEquals(__instance, ___attackReference.lightAttack) && __instance.type == _Weapon.WeaponType.Dagger))
+                if (__instance.slashPrefab && !(ReferenceEquals(__instance, ___attackReference.lightAttack) && (__instance.type == _Weapon.WeaponType.Dagger || __instance.gameObject.name == "WEAPON_Umbrella(Clone)")))
                 {
                     GameObject gameObject = Instantiate<GameObject>(__instance.slashPrefab, __instance.transform.position, __instance.transform.rotation);
                     __instance.swordSlash = gameObject.GetComponentInChildren<SlashRing>();
@@ -939,11 +947,17 @@ namespace rework
         [HarmonyPostfix]
         public static void Start_post(ChaserBullet __instance)
         {
-            if (SceneManager.GetActiveScene().name != "boss_Grandma")
+            if (SceneManager.GetActiveScene().name != "boss_Grandma" || GrandmaClone.rage == 2)
             {
                 __instance.airTracking = 0.5f;
                 __instance.trackingAccel = 2;
                 __instance.shootSpeed = 16;
+            }
+            else if (GrandmaClone.rage == 1)
+            {
+                __instance.airTracking = 0.5f;
+                __instance.trackingAccel = 0.7f;
+                __instance.shootSpeed = 10;
             }
         }
 
@@ -1267,6 +1281,7 @@ namespace rework
         {
             if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone" && GrandmaClone.rage < 2)
             {
+                SoundEngine.Event("GrandmaBoss_Death", __instance.gameObject);
                 GrandmaClone.rage++;
                 if (__instance.GetComponent<GrandmaBoss>() == GrandmaBoss.instance || GrandmaBoss.instance == null)
                 {
@@ -1275,6 +1290,22 @@ namespace rework
                     grandmaClones.RemoveAt(0);
                 }
                 UnityEngine.Object.Destroy(__instance.gameObject);
+
+                var r = GrandmaClone.rage;
+                var v = AccessTools.Field(typeof(GrandmaBoss), "angleBetweenBullets");
+                if (r == 1)
+                {
+                    v.SetValue(GrandmaBoss.instance, 12);
+                    if (grandmaClones.Count() == 1)
+                    {
+                        v.SetValue(grandmaClones[0].GetComponent<GrandmaBoss>(), 12);
+                    }
+                }
+                if (r == 2)
+                {
+                    v.SetValue(GrandmaBoss.instance, 10);
+                }
+
                 return false;
             }
             return true;
@@ -1315,7 +1346,6 @@ namespace rework
                     
                     //AccessTools.Field(typeof(GrandmaBoss), "timer").SetValue(b, 0.01f);
                     Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, b, "throwCounter");
-                    
                 }
             }
 
@@ -1371,6 +1401,20 @@ namespace rework
         public static bool StopArson()
         {
             return false;
+        }
+
+        //gran bullet non-reflect fix
+        [HarmonyPatch(typeof(GrandmaBullet), "Shoot")]
+        [HarmonyPrefix]
+        public static void FixbulletCollision(GrandmaBullet __instance)
+        {
+            if (__instance.gameObject.GetComponent<HitBackProjectile>() == null)
+            {
+                var c = __instance.gameObject.AddComponent<HitBackProjectile>();
+                c.speedMultiplier = 2;
+                c.bullet = __instance.GetComponent<Bullet>();
+                AccessTools.Field(typeof(HitBackProjectile), "invulTime").SetValue(c, 0);
+            }
         }
     }
 }

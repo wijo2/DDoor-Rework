@@ -13,12 +13,11 @@ namespace rework
         public static int howManyCurrently = 0;
         public static int rage = 0;
         public static int grandmasTotal = 1; //how many have existed, so basically spawning phase
-        public static AI_Brain.AIState[] noMoveStates = new AI_Brain.AIState[] { 
-            AI_Brain.AIState.PrepShoot,
-            AI_Brain.AIState.Dash, 
-            AI_Brain.AIState.Transform, 
-            AI_Brain.AIState.PrepTransform, 
-            AI_Brain.AIState.Throw
+        public static AI_Brain.AIState[] MoveStates = new AI_Brain.AIState[] { 
+            AI_Brain.AIState.Laser,
+            AI_Brain.AIState.TeleportIn,
+            AI_Brain.AIState.Teleport,
+            AI_Brain.AIState.Patrol
         };
 
         public int howManyeth;
@@ -49,10 +48,10 @@ namespace rework
 
         public void Update()
         {
-            if (!sethp) { GetComponent<DamageableBoss>().ForceHealth(hp); sethp = true; }
+            if (!sethp) { GetComponent<DamageableBoss>().ForceHealth(hp); sethp = true; gameObject.GetComponent<DamageableBoss>().ReceiveDamage(0.01f, 0, Vector3.zero, Vector3.zero, hitForce: 0); }
 
             var state = ai.GetState();
-            if (!noMoveStates.Contains(state))
+            if (MoveStates.Contains(state))
             {
                 if (howManyCurrently == 1)
                 {
@@ -84,7 +83,7 @@ namespace rework
                 }
             }
             if (grandmasTotal == 1 && hp < 90) { Rework.grandmaClones[0].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
-            else if (grandmasTotal == 2 && hp < 100) { Rework.grandmaClones.Last().GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
+            else if (grandmasTotal == 2 && hp < 110) { Rework.grandmaClones.Last().GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
         }
 
         public static void Reset()

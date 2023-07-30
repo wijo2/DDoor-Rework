@@ -21,7 +21,6 @@ namespace rework.GUI
 
         public static KeyCode bindKey = KeyCode.None;
         public static bool currentlyBinding = false;
-        public static InventoryItem lastWeapon;
 
         public static void Init()
         {
@@ -29,7 +28,7 @@ namespace rework.GUI
 
             var cat = new GUIBox.HorizontalOptionCategory(subCategories: new GUIBox.OptionCategory[] { text, bcat });
 
-            gui = new GUIBox.GUIBox(new UnityEngine.Vector2(0.05f, 0.05f), cat);
+            gui = new GUIBox.GUIBox(new UnityEngine.Vector2(0.025f, 0.05f), cat);
         }
 
         public static void OnGui() //unity won't call since it's static but using exact name for indication of where to call
@@ -52,13 +51,12 @@ namespace rework.GUI
             if (PlayerGlobal.instance != null)
             {
                 var wc = PlayerGlobal.instance.gameObject.GetComponent<WeaponControl>();
-                if (lastWeapon && !currentlyBinding && Input.GetKeyDown(bindKey) && wc != null && !wc.IsAnyAttackActive())
+                if (Rework.lastWeapon && !currentlyBinding && Input.GetKeyDown(bindKey) && wc != null && !wc.IsAnyAttackActive())
                 {
-                    wc.SetWeapon(PlayerEquipment.PlayerEquipSlot.RightHand, lastWeapon);
+                    wc.SetWeapon(PlayerEquipment.PlayerEquipSlot.RightHand, Rework.lastWeapon);
                 }
             }
             
-            Rework.L(currentlyBinding.ToString());
             if (currentlyBinding)
             {
                 foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
