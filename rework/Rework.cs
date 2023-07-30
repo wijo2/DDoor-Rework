@@ -548,6 +548,14 @@ namespace rework
             return true;
         }
 
+        //flame charges slowly
+        [HarmonyPatch(typeof(ArrowFireBlast), "Start")]
+        [HarmonyPrefix]
+        public static void Start_pre(ArrowFireBlast __instance)
+        {
+            __instance.timeForFullCharge = 1;
+        }
+
         //enemy mods
 
         //headRoller
