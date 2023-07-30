@@ -114,9 +114,9 @@ namespace rework
                     case "um":
                         if (umbrellaModel == null)
                         {
-                            foreach(var obj in Resources.FindObjectsOfTypeAll<Copy2DPos>())
+                            foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>())
                             {
-                                if (obj.name == "Weapon_Umbrella")
+                                if (obj.name == "WEAPON_Umbrella")
                                 {
                                     umbrellaModel = Instantiate(obj.GetComponentInChildren<Animator>().gameObject, null);
                                     break;
@@ -176,6 +176,18 @@ namespace rework
             return returns;
         }
 
+        //gui and weapon swap
+
+        public void Update() => GUI.MainMenuGUI.Update();
+        public void OnGUI() => GUI.MainMenuGUI.OnGui();
+
+        [HarmonyPatch(typeof(WeaponControl), "SetWeapon")]
+        [HarmonyPrefix]
+        public static void SetWeapon_pre(WeaponControl __instance)
+        {
+            GUI.MainMenuGUI.lastWeapon = __instance.weaponRight;
+        }
+
         //weapon mods
 
         //new names and desctiptions in menu
@@ -199,7 +211,7 @@ namespace rework
                     __instance.itemInfoTextArea.text = "The traditional weapon of the speedrunners, except they're slow this time.\nLight attack throws daggers with 0.5 base dmg (about half of uc heavy), upgrade dexterity to increase range.";
                     break;
                 case "hammer_name":
-                    __instance.itemNameTextArea.text = "The Thought Clouder";
+                    __instance.itemNameTextArea.text = "The engineer wrench";
                     __instance.itemInfoTextArea.text = "The weapon only hit-and-run light-heavy spam noobs used, well, not this time c:\nNobody knowssssss";
                     break;
                 case "sword_heavy_name":
@@ -319,6 +331,10 @@ namespace rework
             var type = __instance.type;
             if (type == _Weapon.WeaponType.Sword && __instance.gameObject.name == "WEAPON_Umbrella(Clone)") { type = _Weapon.WeaponType.Umbrella; }
 
+            var dir = PlayerGlobal.instance.GetLastInput();
+            dir.y = 0;
+            dir.Normalize();
+
             switch (type)
             {
                 case _Weapon.WeaponType.Dagger:
@@ -343,9 +359,6 @@ namespace rework
                     {
                         UnityEngine.Object.Destroy(light);
                     }
-                    var dir = PlayerGlobal.instance.GetLastInput();
-                    dir.y = 0;
-                    dir.Normalize();
                     newPrefab.layer = 11;
                     newPrefab.transform.position = __instance.gameObject.transform.position + dir * (1.5f + Mathf.Pow(Inventory.GetMeleeDamageModifier(), 0.5f)) + new Vector3(0, 0.8f, 0);
                     newPrefab.transform.rotation = Quaternion.identity;       
@@ -377,11 +390,18 @@ namespace rework
                 case _Weapon.WeaponType.Umbrella:
                     if (!LoadThings("um")[0]) { L("couldn't find umbrella model"); return __result; }
                     var projectile = Instantiate(umbrellaModel);
+                    var size = ((Inventory.GetMeleeDamageModifier() - 1) * 0.5f + 1) * 0.8f;
+
                     projectile.SetActive(true);
-                    projectile.transform.localPosition = PlayerGlobal.instance.transform.position;
+                    projectile.transform.localPosition = PlayerGlobal.instance.transform.position + dir * 3 + Vector3.up * 3 * size;
                     projectile.transform.rotation = Quaternion.identity;
+                    projectile.transform.localScale = Vector3.one * size;
+
                     var bulletComp = projectile.AddComponent<UmbrellaBullet>();
-                    bulletComp.Shoot(PlayerGlobal.instance.transform.forward, 5);
+                    bulletComp.Shoot(dir, 5, size);
+
+                    var t = projectile.AddComponent<TimedDelete>();
+                    t.timer = 2 * Inventory.GetMagicDamageModifier();
                     return __result;
             }
             return __result;
@@ -405,6 +425,14 @@ namespace rework
         public static void ReceiveDamage_post(HitBackProjectile __instance, float dmg)
         {
             __instance.bullet.damage = dmg;
+        }
+
+        //umbrella won't destroy bullets
+        [HarmonyPatch(typeof(Bullet), "OnCollisionEnter")]
+        [HarmonyPrefix]
+        public static bool OnCollisionEnter_pre(Collision col)
+        {
+            return col.contacts[0].otherCollider.GetComponent<UmbrellaBullet>() != null;
         }
 
         //slash radius for weapons set

@@ -67,6 +67,14 @@
       <HintPath>Deps\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>Deps\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>Deps\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>Deps\UnityEngine.ParticleSystemModule.dll</HintPath>
       <Private>False</Private>
@@ -75,12 +83,18 @@
       <HintPath>Deps\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>Deps\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>Deps\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GUI\MainMenuGUI.cs" />
+    <Compile Include="GUI\GUIBox.cs" />
     <Compile Include="UmbrellaBullet.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="GrandmaClone.cs" />
