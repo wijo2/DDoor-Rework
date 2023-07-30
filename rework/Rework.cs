@@ -206,7 +206,7 @@ namespace rework
                     break;
                 case "umbrella_name":
                     __instance.itemNameTextArea.text = "The (Bullet) Rain Deflector";
-                    __instance.itemInfoTextArea.text = "The traditional weapon of the masochist kind.\nAttacks are extremely weak, but light attack shoots out a projectile that, wile doesn't deal any damage, deflects bullets for 0.5 dmg each.";
+                    __instance.itemInfoTextArea.text = "The traditional weapon of the masochist kind.\nAttacks are extremely weak, but light attack shoots out a projectile that, wile doesn't deal any damage, deflects bullets for 0.5 dmg each. Str increases size and magic increases lifetime.";
                     break;
                 case "daggers_name":
                     __instance.itemNameTextArea.text = "The Ranged Scrub";
