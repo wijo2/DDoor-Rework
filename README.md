@@ -1,5 +1,5 @@
 # DDoor-Rework
-This readme is written for the demo release, which is only modded from the start until grandma through the straightest path. (no silent servants)
+This readme is written for the demo release, which is only modded from the start until grandma, so modded areas include the tutorial, graveyard, estate, manor, basement, furnace and gran room.
 
 Installation instructions are at the bottom, but you should read this file through before playing.
 
