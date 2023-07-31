@@ -3,14 +3,16 @@ This readme is written for the demo release, which is only modded from the start
 
 Installation instructions are at the bottom, but you should read this file through before playing.
 
-### Very important to read changes
+### Very important to read stuff
 Weapons have been completely reworked. The uncharged heavy is now the basic attack, and as such it's stats are shown in the weapons menu at bottom right. The light attacks have an unique function for each weapon, so be sure to read the weapon descriptions and experiment.
 
 Light attacks can no longer deflect bullets unless otherwise stated, only heavies have that ability by default.
 
-Spells deal 1 damage base, which is pretty high, so be sure to use them.
+Spells deal 1 damage base (compared to sword uncharged heavy base of 1.2), which is pretty high, so be sure to use them.
 
 On the main menu you can bind a button to switch between the current and most recently used weapon, make sure it's easily accessible, you are expected to swap weapons mid-combat. (mostly to umbrella as of now.) Though the bind isn't saved between sessions, and the recent weapon isn't saved between rooms/death, sorry for the inconveniance, I'll fix it later but these take some time to solve.
+
+This mod uses assets from the game in scenes where they normally don't exist so they need to be loaded in before working. The biggest example is daggers, if you boot up the game and enter a save that's in a room without any blue mage enemies they won't work, you'll have to visit a room that contains a mage first (almost any big area). Just entering graveyard should be enough as of now for everything, I'll make an automatic loading system later.
 
 ### general tips/mindset
 This mod is VERY hard, death is expected, and it is completely ok to die a lot. it took me, wijo, the dev and a speedrunner, over 5h to beat grandma for instance.
