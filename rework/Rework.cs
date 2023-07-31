@@ -171,7 +171,7 @@ namespace rework
                         break;
 
                     default:
-                        Log.LogWarning("LoadThings string \"" + thing + "\" doesn't exist");
+                        L("LoadThings string \"" + thing + "\" doesn't exist");
                         break;
                 }
             }

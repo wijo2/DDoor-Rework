@@ -40,7 +40,7 @@ namespace GUIBox
 
             contents.OnGUI(topLeftCorner, 0.002f, 20);
             GUI.skin.label.clipping = prevClip;
-            GUIBox.ChangeFontSize(12);
+            ChangeFontSize(15);
         }
 
         public static Vector2 CalcTextSize(string text, int fontSize)
