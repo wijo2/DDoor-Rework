@@ -22,7 +22,7 @@ After you die, think strategically. How could I have dodged that? Was this the b
 And if this doesn't sound like fun to you, disregard everything I've said and do whatever you want with the mod. I don't care.
 
 ### Installation
-step 1: make sure you have the debug mod installed (you can get it from here: https://github.com/PrestonRooker/DDoorDebugMod), you can disable it if you want to by moving the game/BepInEx/plugins/DDoorDebug.dll file *outside* of the plugins folder, but make sure to keep the wfshader.bundle file in the folder.
+step 1: make sure you have the debug mod installed (you can get it from here: https://github.com/PrestonRooker/DDoorDebugMod), you can disable it if you want to by moving the game/BepInEx/plugins/DDoorDebug.dll file *outside* of the plugins folder.
 
 step 2: go to https://github.com/wijo2/DDoor-Rework/releases and download the .net v.4.5.2 file, and drag it into the aftermentioned plugins folder.
 
