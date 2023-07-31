@@ -19,7 +19,7 @@ namespace rework
 
         private const string pluginGuid = "ddoor.gameRework.wijo";
         private const string pluginName = "Game Rework";
-        private const string pluginVersion = "0.1.0";
+        private const string pluginVersion = "0.1.1";
 
         public static GameObject mageBulletPrefab;
         public static GameObject arrowPrefab;
@@ -430,14 +430,6 @@ namespace rework
         public static void ReceiveDamage_post(HitBackProjectile __instance, float dmg)
         {
             __instance.bullet.damage = dmg;
-        }
-
-        //umbrella won't destroy bullets
-        [HarmonyPatch(typeof(Bullet), "OnCollisionEnter")]
-        [HarmonyPrefix]
-        public static bool OnCollisionEnter_pre(Collision col)
-        {
-            return col.contacts[0].otherCollider.GetComponent<UmbrellaBullet>() != null;
         }
 
         //slash radius for weapons set
@@ -906,7 +898,7 @@ namespace rework
         {
             if (LoadThings("ga")[0] && __instance.pulseScale.x == 8.0f && __instance.gameObject.layer == 12)
             {
-                Log.LogWarning("layer = " + __instance.gameObject.layer.ToString());
+                L("layer = " + __instance.gameObject.layer.ToString());
                 var dir = (PlayerGlobal.instance.gameObject.transform.position - __instance.gameObject.transform.position);
                 dir.y = 0;
                 dir.Normalize();
