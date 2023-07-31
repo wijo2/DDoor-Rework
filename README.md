@@ -26,6 +26,6 @@ And if this doesn't sound like fun to you, disregard everything I've said and do
 ### Installation
 step 1: make sure you have the debug mod installed (you can get it from here: https://github.com/PrestonRooker/DDoorDebugMod), you can disable it if you want to by moving the game/BepInEx/plugins/DDoorDebug.dll file *outside* of the plugins folder.
 
-step 2: go to https://github.com/wijo2/DDoor-Rework/releases and download the .net v.4.5.2 file, and drag it into the aftermentioned plugins folder.
+step 2: go to https://github.com/wijo2/DDoor-Rework/releases and download the _4.5.2 file (this is the .net version), and drag it into the aftermentioned plugins folder.
 
 step 3: boot up the game, if you see the bind gui for weapon switch at the top left of the title screen that means it has been successfully installed. If not however, try the other file on the releases page, the above suggested version doesn't work for everyone.
