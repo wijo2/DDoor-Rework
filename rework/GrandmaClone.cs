@@ -73,6 +73,7 @@ namespace rework
 
         public static void CalcHpAndEnable()
         {
+            if (rage >= 3 || !GrandmaBoss.instance) { return; }
             //Rework.L("hp check");
             var hp = GrandmaBoss.instance.GetComponent<DamageableBoss>().GetCurrentHealth();
             foreach (var gran in Rework.grandmaClones)

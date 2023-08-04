@@ -1246,8 +1246,9 @@ namespace rework
         //grandma is alive
         [HarmonyPatch(typeof(GrandmaBoss), "Awake")]
         [HarmonyPrefix]
-        public static bool Awake_pre(GrandmaBoss __instance)
+        public static bool Awake_pre(GrandmaBoss __instance, ref int ___maxBullets)
         {
+            ___maxBullets = 200;
             if (__instance.gameObject.name == "grandma")
             {
                 GrandmaBoss.instance = __instance;
@@ -1279,10 +1280,21 @@ namespace rework
         [HarmonyPrefix]
         public static bool Die_pre(DamageableBoss __instance)
         {
-            if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone" && GrandmaClone.rage < 2)
+            if (__instance.gameObject.name == "grandma" || __instance.gameObject.name == "gran clone")
             {
-                SoundEngine.Event("GrandmaBoss_Death", __instance.gameObject);
                 GrandmaClone.rage++;
+                if (GrandmaClone.rage >= 3) 
+                {
+                    var p = __instance.transform;
+                    foreach (var thing in __instance.GetComponentsInChildren<Transform>())
+                    {
+                        if (thing.name == "PotHat_end") { p = thing.parent; break; }
+                    }
+                    if (p == null) { L("null"); return true; }
+                    FindObjectOfType<SoulEmerge>().soulOrigin = p;
+                    return true; 
+                }
+                SoundEngine.Event("GrandmaBoss_Death", __instance.gameObject);
                 if (__instance.GetComponent<GrandmaBoss>() == GrandmaBoss.instance || GrandmaBoss.instance == null)
                 {
                     GrandmaBoss.instance = grandmaClones[0].GetComponent<GrandmaBoss>();
@@ -1363,24 +1375,20 @@ namespace rework
         {
             if (__instance != GrandmaBoss.instance && GrandmaBoss.instance.GetState() == AI_Brain.AIState.Laser) //if a clone is late it's sped up
             {
-                L("clone spin");
                 foreach (var gran in grandmaClones)
                 {
                     if (gran.GetComponent<GrandmaClone>().shouldBeActive)
                     {
-                        L("copy attempt on clone spin");
                         Helper.CopyPrivateValue<GrandmaBoss>(GrandmaBoss.instance, gran.GetComponent<GrandmaBoss>(), "timer");
                     }
                 }
             }
             if (__instance == GrandmaBoss.instance) //if og is late everyone else is slowed down
             {
-                L("og spin");
                 foreach (var gran in grandmaClones)
                 {
                     if (gran.GetComponent<GrandmaClone>().shouldBeActive && gran.GetComponent<GrandmaBoss>().GetState() == AI_Brain.AIState.Laser)
                     {
-                        L("copy attempt on og spin");
                         Helper.CopyPrivateValue<AI_Brain>(GrandmaBoss.instance.GetComponent<AI_Brain>(), gran.GetComponent<AI_Brain>(), "timer");
                     }
                 }
@@ -1415,6 +1423,25 @@ namespace rework
                 c.bullet = __instance.GetComponent<Bullet>();
                 AccessTools.Field(typeof(HitBackProjectile), "invulTime").SetValue(c, 0);
             }
+        }
+
+        //stop error
+        [HarmonyPatch(typeof(GrandmaPot), "DestroyAll")]
+        [HarmonyPrefix]
+        public static void DestroyAll_pre(GrandmaPot __instance)
+        {
+            if (GrandmaBoss.instance)
+            {
+                AccessTools.Field(typeof(GrandmaPot), "instance").SetValue(__instance, GrandmaBoss.instance.GetComponent<GrandmaPot>());
+            }
+        }
+
+        //fix problem of not enough projectiles
+        [HarmonyPatch(typeof(GrandmaBoss), "doShot")]
+        [HarmonyPrefix]
+        public static void FixProjectiles(ref GrandmaBullet[] ___bulletList, int ___bulletIndex)
+        {
+            if (___bulletList[___bulletIndex].gameObject.activeInHierarchy) { ___bulletList[___bulletIndex].gameObject.SetActive(false); }
         }
     }
 }
