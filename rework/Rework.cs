@@ -19,7 +19,7 @@ namespace rework
 
         private const string pluginGuid = "ddoor.gameRework.wijo";
         private const string pluginName = "Game Rework";
-        private const string pluginVersion = "0.1.2";
+        private const string pluginVersion = "0.1.3";
 
         public static GameObject mageBulletPrefab;
         public static GameObject arrowPrefab;
