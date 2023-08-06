@@ -106,6 +106,7 @@ namespace rework
                                 {
                                     daggerModel = Instantiate(weapons[i].transform.Find("Model1").gameObject);
                                     daggerModel.GetComponentInChildren<Renderer>().enabled = false;
+                                    daggerModel.SetActive(false);
                                     break;
                                 }
                             }
@@ -121,6 +122,7 @@ namespace rework
                                 if (obj.name == "WEAPON_Umbrella")
                                 {
                                     umbrellaModel = Instantiate(obj.GetComponentInChildren<Animator>().gameObject, null);
+                                    umbrellaModel.SetActive(false);
                                     break;
                                 }
                             }
@@ -346,6 +348,7 @@ namespace rework
                     if (!LoadThings("dm")[0]) { return __result; }
                     if (!LoadThings("mb")[0]) { return __result; }
                     var model = Instantiate(daggerModel);
+                    model.SetActive(true);
                     model.GetComponentInChildren<Renderer>().enabled = true;
 
                     var newPrefab = Instantiate(mageBulletPrefab);
@@ -395,6 +398,7 @@ namespace rework
                 case _Weapon.WeaponType.Umbrella:
                     if (!LoadThings("um")[0]) { L("couldn't find umbrella model"); return __result; }
                     var projectile = Instantiate(umbrellaModel);
+                    projectile.SetActive(true);
                     var size = ((Inventory.GetMeleeDamageModifier() - 1) * 0.5f + 1) * 0.8f;
 
                     projectile.SetActive(true);
