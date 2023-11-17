@@ -43,11 +43,9 @@ namespace rework
 
         public void OnTriggerEnter(Collider collider)
         {
-            Rework.L("collision " + collider.gameObject.name);
             var bulletComp = collider.gameObject.GetComponent<HitBackProjectile>();
             if (bulletComp != null)
             {
-                Rework.L("bullet collision");
                 var d = bulletComp.gameObject.GetComponent<Damageable>();
                 if (d != null)
                 {

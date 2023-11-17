@@ -48,12 +48,14 @@ namespace rework.GUI
 
         public static void Update()
         {
+            if (SceneManager.GetActiveScene().name == "TitleScreen") { Rework.lastWeaponId = null; }
+
             if (PlayerGlobal.instance != null)
             {
                 var wc = PlayerGlobal.instance.gameObject.GetComponent<WeaponControl>();
-                if (Rework.lastWeapon && !currentlyBinding && Input.GetKeyDown(bindKey) && wc != null && !wc.IsAnyAttackActive())
+                if (Rework.lastWeaponId != null && !currentlyBinding && Input.GetKeyDown(bindKey) && wc != null && !wc.IsAnyAttackActive())
                 {
-                    wc.SetWeapon(PlayerEquipment.PlayerEquipSlot.RightHand, Rework.lastWeapon);
+                    PlayerEquipment.instance.SetRightHandWeapon(Rework.lastWeaponId);
                 }
             }
             

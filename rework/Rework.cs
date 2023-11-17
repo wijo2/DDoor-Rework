@@ -28,9 +28,11 @@ namespace rework
         public static GameObject mediumSlime;
         public static GameObject smallSlime;
 
+        public static bool DFSCanShoot = true;
+
         public static List<GameObject> grandmaClones = new List<GameObject>();
 
-        public static InventoryItem lastWeapon;
+        public static string lastWeaponId;
 
         public void Awake()
         {
@@ -117,7 +119,7 @@ namespace rework
                     case "um":
                         if (umbrellaModel == null)
                         {
-                            foreach(var obj in Resources.FindObjectsOfTypeAll<GameObject>())
+                            foreach (var obj in Resources.FindObjectsOfTypeAll<GameObject>())
                             {
                                 if (obj.name == "WEAPON_Umbrella")
                                 {
@@ -182,14 +184,20 @@ namespace rework
 
         //gui and weapon swap
 
-        public void Update() => GUI.MainMenuGUI.Update();
+        public void Update()
+        {
+            DFSCanShoot = true;
+            GUI.MainMenuGUI.Update();
+        }
+
         public void OnGUI() => GUI.MainMenuGUI.OnGui();
 
         [HarmonyPatch(typeof(WeaponControl), "SetWeapon")]
         [HarmonyPrefix]
-        public static void SetWeapon_pre(WeaponControl __instance)
+        public static void SetWeapon_pre(WeaponControl __instance, InventoryItem weaponItem)
         {
-            lastWeapon = __instance.weaponRight;
+            if (__instance.weaponRight == null || __instance.weaponRight.id == weaponItem.id) { return; }
+            lastWeaponId = __instance.weaponRight.id;
         }
 
         //weapon mods
@@ -201,7 +209,7 @@ namespace rework
         {
             if (!__instance.itemInfoTextArea || !___itemData || !UIMenuPauseController.instance.IsPaused() || !Resources.FindObjectsOfTypeAll<UIMenuWeapons>()[0].HasControl()) { return true; }
             //Log.LogWarning("item: " + ___itemData.GetItemName());
-            switch (___itemData.GetItemName()){
+            switch (___itemData.GetItemName()) {
                 case "sword_name":
                     __instance.itemNameTextArea.text = "The Non-Zoomynator";
                     __instance.itemInfoTextArea.text = "The other traditional weapon of the crowkind, along with kitchenware.\nLight attacks only deal quarter of uncharged heavy dmg, but backstabs deal uncharged heavy dmg.";
@@ -250,7 +258,7 @@ namespace rework
                 __instance.statSwings.text = "It's a heavy wtf";
                 __instance.statSpeed.text = component.slashTime.ToString();
                 __instance.statRange.text = component.slashRadius.ToString();
-            } 
+            }
             return false;
         }
 
@@ -283,6 +291,7 @@ namespace rework
                         {
                             num *= 4; // = uc heavy
                             SoundEngine.Event("HeavyAttackFullyCharged", __instance.gameObject);
+                            PlayerGlobal.instance.gameObject.GetComponent<WeaponControl>().ResetStamina();
                         }
                         break;
                     case _Weapon.WeaponType.Dagger:
@@ -369,7 +378,7 @@ namespace rework
                     }
                     newPrefab.layer = 11;
                     newPrefab.transform.position = __instance.gameObject.transform.position + dir * (1.5f + Mathf.Pow(Inventory.GetMeleeDamageModifier(), 0.5f)) + new Vector3(0, 0.8f, 0);
-                    newPrefab.transform.rotation = Quaternion.identity;       
+                    newPrefab.transform.rotation = Quaternion.identity;
                     model.transform.rotation = Quaternion.identity;
                     model.transform.SetParent(newPrefab.transform);
                     model.transform.localPosition = Vector3.zero;
@@ -874,7 +883,7 @@ namespace rework
             }
             __instance.timeBetweenSlams = 1f;
             __instance.maxSlams = 10;
-            __instance.timeBetweenShots = 0.1f;
+            __instance.timeBetweenShots = 0.5f;
         }
 
         //spinning speed set
@@ -892,6 +901,46 @@ namespace rework
             {
                 __instance.StartSlowSpin();
             }
+        }
+
+        //shot spread
+        [HarmonyPatch(typeof(ForestMother), "ShootSpore")]
+        [HarmonyPrefix]
+        public static bool ShootSpore_pre(ForestMother __instance, float ___slamTimer, Vector3 ___shootPos)
+        {
+            Log.LogWarning("start!");
+            if (___slamTimer <= 0f && DFSCanShoot)
+            {
+                SoundEngine.Event("PlantBossBombFire", __instance.gameObject);
+                ___slamTimer = 0.1f;
+                ScreenShake.ShakeXY(4f, 10f, 8, 0f, null);
+                if (RumbleShake.instance != null)
+                {
+                    RumbleShake.instance.Rumble(0.6f, 0.1f, RumbleShake.RumbleCurve.Linear);
+                }
+                for (float i = 0; i < 3; i++)
+                {
+                    HurlPot component = UnityEngine.Object.Instantiate<GameObject>(__instance.sporePrefab, ___shootPos + Vector3.up, Quaternion.identity).GetComponent<HurlPot>();
+                    if (component)
+                    {
+                        Vector3 vector = PlayerGlobal.instance.transform.position - __instance.transform.position;
+                        vector.y = 0f;
+                        Vector3 target;
+                        if (vector.magnitude >= 6f)
+                        {
+                            target = PlayerGlobal.instance.transform.position;
+                        }
+                        else
+                        {
+                            target = __instance.transform.position + vector.normalized * 6f;
+                        }
+                        var angle = i * 2f / 3f * UnityEngine.Mathf.PI;
+                        component.ThrowAt(target + new Vector3(UnityEngine.Mathf.Sin(angle) * 6, 0, UnityEngine.Mathf.Cos(angle) * 6));
+                    }
+                }
+                DFSCanShoot = false;
+            }
+            return false;
         }
 
         //archers
