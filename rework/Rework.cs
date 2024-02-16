@@ -654,9 +654,31 @@ namespace rework
         }
 
         //grunt
+        //grunt identifier
+        public static GruntType IdentifyGrunt(GameObject grunt)
+        {
+            if (grunt.name.Contains("Redeemer"))
+            {
+                return GruntType.GOTD;
+            }
+            if (grunt.name.Contains("Pot Variant"))
+            {
+                return GruntType.Pot;
+            }
+            return GruntType.Forest;
+        }
+
+        //c1 = graveyard - grandma and so on
+        public enum GruntType
+        {
+            GOTD,
+            Pot,
+            Forest,
+        }
+
         //stats set
-        [HarmonyPatch(typeof(AI_Grunt), "FixedUpdate")]
-        [HarmonyPrefix]
+        [HarmonyPatch(typeof(AI_Grunt), "Start")]
+        [HarmonyPostfix]
         public static void FixedUpdate_pre(AI_Grunt __instance, CharacterMovementControl ___movement, ref float ___movementSpeed, ref float ___slowDownMultiplier)
         {
             ___movement.maxSpeed = 30;
@@ -665,7 +687,23 @@ namespace rework
             ___slowDownMultiplier = 0.9f;
             __instance.maxCanAttackTimer = 1.5f;
             __instance.maxSlowTimer = 2f;
+			if (IdentifyGrunt(__instance.gameObject) == GruntType.Forest) //forest variant
+			{
+				__instance.GetComponent<CharacterMovementControl>().acceleration = 10;
+				__instance.jumpAttackChance = 0;
+			}
         }
+
+		//forest grunts do running attack after backstep
+        [HarmonyPatch(typeof(AI_Grunt), "SetState")]
+        [HarmonyPrefix]
+		public static void SetState_pre(AI_Grunt __instance, AI_Brain.AIState newState)
+		{
+			if (IdentifyGrunt(__instance.gameObject) == GruntType.Forest && newState == AI_Brain.AIState.BackStep) //forest variant
+			{
+				AccessTools.Field(typeof(AI_Grunt), "doRunningAttackNext").SetValue(__instance, true);
+			}
+		}
 
         //running attack mod
         [HarmonyPatch(typeof(AI_Grunt), "aimAttack", typeof(float))]
