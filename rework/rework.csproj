@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>rework</RootNamespace>
     <AssemblyName>rework</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -95,6 +95,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Categories\Enemies\BatMods.cs" />
+    <Compile Include="Categories\Enemies\ArcherMods.cs" />
+    <Compile Include="Categories\Enemies\GranMods.cs" />
+    <Compile Include="Categories\Enemies\PlagueKnightMods.cs" />
+    <Compile Include="Categories\Enemies\SlimeMods.cs" />
+    <Compile Include="Categories\Enemies\ExplosivePotMods.cs" />
+    <Compile Include="Categories\Enemies\LickitungMods.cs" />
+    <Compile Include="Categories\Enemies\SmoughMods.cs" />
+    <Compile Include="Categories\Enemies\MagicPotMods.cs" />
+    <Compile Include="Categories\Enemies\SpinnyPotMods.cs" />
+    <Compile Include="Categories\Enemies\DFSMods.cs" />
+    <Compile Include="Categories\Enemies\GOTDMods.cs" />
+    <Compile Include="Categories\Enemies\GruntMods.cs" />
+    <Compile Include="Categories\Enemies\MageMods.cs" />
+    <Compile Include="Categories\Enemies\HeadRollerMods.cs" />
+    <Compile Include="Categories\SpellMods.cs" />
+    <Compile Include="Categories\WeaponMods.cs" />
     <Compile Include="GUI\MainMenuGUI.cs" />
     <Compile Include="GUI\GUIBox.cs" />
     <Compile Include="UmbrellaBullet.cs" />
@@ -104,4 +121,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>call "C:\Users\valok\source\repos\rework\rework\bin\moveFile.bat"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

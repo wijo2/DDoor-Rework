@@ -76,15 +76,15 @@ namespace rework
             if (rage >= 3 || !GrandmaBoss.instance) { return; }
             //Rework.L("hp check");
             var hp = GrandmaBoss.instance.GetComponent<DamageableBoss>().GetCurrentHealth();
-            foreach (var gran in Rework.grandmaClones)
+            foreach (var gran in Categories.Enemies.GranMods.grandmaClones)
             {
                 if (gran.GetComponent<GrandmaClone>().shouldBeActive)
                 {
                     hp += gran.GetComponent<DamageableBoss>().GetCurrentHealth();
                 }
             }
-            if (grandmasTotal == 1 && hp < 90) { Rework.grandmaClones[0].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
-            else if (grandmasTotal == 2 && hp < 110) { Rework.grandmaClones.Last().GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
+            if (grandmasTotal == 1 && hp < 90) { Categories.Enemies.GranMods.grandmaClones[0].GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
+            else if (grandmasTotal == 2 && hp < 110) { Categories.Enemies.GranMods.grandmaClones.Last().GetComponent<GrandmaClone>().shouldBeActive = true; grandmasTotal++; }
         }
 
         public static void Reset()
@@ -92,7 +92,7 @@ namespace rework
             grandmasTotal = 1;
             howManyCurrently = 0;
             rage = 0;
-            Rework.grandmaClones.Clear();
+            Categories.Enemies.GranMods.grandmaClones.Clear();
         }
     }
 }
